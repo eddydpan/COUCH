@@ -1,3 +1,7 @@
+# Control-Oriented Universal Chassis Hub (C.O.U.C.H.) 
+This is the control code for the COUCH project. 
+
+
 # Bluepad32 for ESP32
 
 Supports the different ESP32 chips:
