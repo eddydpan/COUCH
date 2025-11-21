@@ -30,6 +30,7 @@ static uint32_t led1_brightness = LED_MAX_DUTY / 2;  // Start at 50% brightness
 // DAC Configuration
 static dac_oneshot_handle_t dac_chan0_handle;
 static dac_oneshot_handle_t dac_chan1_handle;
+
 // static bool dac_test_mode = true;  // COMMENTED OUT - Test mode disabled
 // static TaskHandle_t dac_test_task_handle = NULL;  // COMMENTED OUT
 
@@ -167,14 +168,26 @@ static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t
             prev_button_x = current_button_x;
 
             // DAC Channel 0 (GPIO25): Controlled by left joystick Y-axis
-            int32_t left_joystick_y = -gp->axis_y;  // Invert Y-axis (up = higher voltage)
-            if (left_joystick_y > 512) left_joystick_y = 512;
-            if (left_joystick_y < -512) left_joystick_y = -512;
-            int32_t left_normalized = left_joystick_y + 512;  // 0-1024 range
-            uint8_t dac0_value = (uint8_t)((left_normalized * LED_MAX_DUTY) / 1024);
+            int32_t left_joystick_y = gp->axis_y;  // Invert Y-axis (down = higher voltage)
+            uint8_t dac0_value;
             
-            static uint8_t prev_dac0_value = LED_MAX_DUTY / 2;
-            if (abs((int)dac0_value - (int)prev_dac0_value) > 5) {
+            // Only respond to NEGATIVE values (joystick pushed DOWN)
+            // Positive values and deadzone output 0V
+            if (left_joystick_y < -16) {
+                // Map from -17 (just outside deadzone) to -512 (max down) -> 0V to 3.3V
+                int32_t adjusted_value = -left_joystick_y - 16;  // Convert to positive and remove deadzone
+                
+                // Clamp to max range
+                if (adjusted_value > 496) adjusted_value = 496;  // 512 - 16 = 496
+                
+                // Map linearly: 0 to 496 -> 0 to 255 (0V to 3.3V)
+                dac0_value = (uint8_t)((adjusted_value * LED_MAX_DUTY) / 496);
+            } else {
+                dac0_value = 0;  // 0V for positive values and deadzone
+            }
+            
+            static uint8_t prev_dac0_value = 255;  // Initialize to invalid value to force first update
+            if (abs((int)dac0_value - (int)prev_dac0_value) > 2) {
                 dac_chan0_set_voltage(dac0_value);
                 led1_set_brightness(dac0_value);  // Also update LED1 brightness
                 prev_dac0_value = dac0_value;
@@ -183,14 +196,26 @@ static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t
             }
 
             // DAC Channel 1 (GPIO26): Controlled by right joystick Y-axis
-            int32_t right_joystick_y = -gp->axis_ry;  // Invert Y-axis (up = higher voltage)
-            if (right_joystick_y > 512) right_joystick_y = 512;
-            if (right_joystick_y < -512) right_joystick_y = -512;
-            int32_t right_normalized = right_joystick_y + 512;  // 0-1024 range
-            uint8_t dac1_value = (uint8_t)((right_normalized * LED_MAX_DUTY) / 1024);
+            int32_t right_joystick_y = gp->axis_ry;  // Invert Y-axis (down = higher voltage)
+            uint8_t dac1_value;
             
-            static uint8_t prev_dac1_value = LED_MAX_DUTY / 2;
-            if (abs((int)dac1_value - (int)prev_dac1_value) > 5) {
+            // Only respond to NEGATIVE values (joystick pushed DOWN)
+            // Positive values and deadzone output 0V
+            if (right_joystick_y < -16) {
+                // Map from -17 (just outside deadzone) to -512 (max down) -> 0V to 3.3V
+                int32_t adjusted_value = -right_joystick_y - 16;  // Convert to positive and remove deadzone
+                
+                // Clamp to max range
+                if (adjusted_value > 496) adjusted_value = 496;  // 512 - 16 = 496
+                
+                // Map linearly: 0 to 496 -> 0 to 255 (0V to 3.3V)
+                dac1_value = (uint8_t)((adjusted_value * LED_MAX_DUTY) / 496);
+            } else {
+                dac1_value = 0;  // 0V for positive values and deadzone
+            }
+            
+            static uint8_t prev_dac1_value = 255;  // Initialize to invalid value to force first update
+            if (abs((int)dac1_value - (int)prev_dac1_value) > 2) {
                 dac_chan1_set_voltage(dac1_value);
                 prev_dac1_value = dac1_value;
                 float voltage1 = (dac1_value / 255.0f) * 3.3f;
