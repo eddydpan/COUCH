@@ -2,7 +2,7 @@
 This is the control code for the COUCH project. 
 
 
-# Bluepad32 for ESP32
+## Setting up Bluepad32 for ESP32
 
 Supports the different ESP32 chips:
 
@@ -11,7 +11,9 @@ Supports the different ESP32 chips:
 * ESP32-C3 / ESP32-C6
 * ESP32-H2
 
-## Install dependencies
+For this project, we went with the ESP-WROOM-32. After we fried it, we switched to an ESP-32 XXSR69. 
+
+### Environment setup + Install dependencies
 
 1. Install ESP-IDF
 
@@ -48,7 +50,7 @@ Supports the different ESP32 chips:
     idf.py flash monitor
     ```
 
-## Debugging
+### Debugging
 
 In case you need to debug an ESP32-S3 (or ESP32-C3 / C6) using JTAG, follow these steps: (or
 read [ESP32 JTAG Debugging][esp32-gdb]).
@@ -57,7 +59,7 @@ read [ESP32 JTAG Debugging][esp32-gdb]).
 
 TL;DR: Open 3 terminals, and do:
 
-### Terminal 1
+#### Terminal 1
 
 ```shell
 idf.py openocd
@@ -71,7 +73,7 @@ Or if you prefer the verbose way (but not both):
 sudo openocd -f board/esp32s3-builtin.cfg  -c "adapter speed 5000"
 ```
 
-### Terminal 2
+#### Terminal 2
 
 ```shell
 idf.py gdb
@@ -89,7 +91,7 @@ xtensa-esp32s3-elf-gdb bluepad32_esp32_example_app.elf
 > c
 ```
 
-### Terminal 3
+#### Terminal 3
 
 ```shell
 # macOS
