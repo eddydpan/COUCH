@@ -13,6 +13,8 @@
 
 #include <uni.h>
 
+#include "motor_controller.h"  // Add motor controller header
+
 // LED Configuration
 #define LED1_PIN GPIO_NUM_2          // Built-in LED on most ESP32 boards
 #define LED_LEDC_TIMER LEDC_TIMER_0
@@ -161,6 +163,23 @@ static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t
                 }
             }
             prev_button_x = current_button_x;
+
+            // TEST MODE: Hold Triangle button to run speed matching test at 1000 RPM
+            static bool prev_button_triangle = false;
+            bool current_button_triangle = (gp->buttons & BUTTON_Y) != 0;
+            if (current_button_triangle && !prev_button_triangle) {
+                logi("Starting motor speed test at 1000 RPM...\n");
+                motor_controller_test_mode(1000.0f);  // Test at 1000 RPM
+            }
+            prev_button_triangle = current_button_triangle;
+
+            // DIAGNOSTICS: Press Circle button to print motor diagnostics
+            static bool prev_button_circle = false;
+            bool current_button_circle = (gp->buttons & BUTTON_B) != 0;
+            if (current_button_circle && !prev_button_circle) {
+                motor_controller_print_diagnostics();
+            }
+            prev_button_circle = current_button_circle;
 
             // DAC Channel 0 (GPIO25): Controlled by left joystick Y-axis
             int32_t left_joystick_y = gp->axis_y;  // Invert Y-axis (down = higher voltage)
