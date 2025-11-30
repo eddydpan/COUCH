@@ -31,10 +31,6 @@ static uint32_t led1_brightness = LED_MAX_DUTY / 2;  // Start at 50% brightness
 static dac_oneshot_handle_t dac_chan0_handle;
 static dac_oneshot_handle_t dac_chan1_handle;
 
-// static bool dac_test_mode = true;  // COMMENTED OUT - Test mode disabled
-// static TaskHandle_t dac_test_task_handle = NULL;  // COMMENTED OUT
-
-
 // Custom "instance"
 typedef struct my_platform_instance_s {
     uni_gamepad_seat_t gamepad_seat;  // which "seat" is being used
@@ -48,7 +44,6 @@ static void led1_start_blinking(void);
 static void led1_stop_blinking(void);
 static void dac_chan0_set_voltage(uint8_t value);
 static void dac_chan1_set_voltage(uint8_t value);
-// static void dac_test_sweep_task(void* pvParameters);  // COMMENTED OUT
 
 // Declarations
 static void trigger_event_on_gamepad(uni_hid_device_t* d);
@@ -304,74 +299,7 @@ static void led_init(void) {
     logi("DAC output range: 0-255 (0.0V - 3.3V)\n");
     logi("Waiting for controller connection...\n");
     logi("After connection: Left joystick -> GPIO25, Right joystick -> GPIO26\n");
-    
-    // // Start test sweep if in test mode
-    // if (dac_test_mode) {
-    //     logi("***** DAC TEST MODE ENABLED *****\n");
-    //     logi("Starting voltage sweep on BOTH DAC channels\n");
-    //     logi("Connect multimeter: RED to GPIO25 or GPIO26, BLACK to GND\n");
-    //     logi("Expected voltage range: 0.0V to 3.3V\n");
-    //     logi("Press BUTTON_A (X/Cross) on controller to exit test mode\n");
-    //     xTaskCreate(dac_test_sweep_task, "dac_test_sweep", 4096, NULL, 5, &dac_test_task_handle);
-    // }
 }
-
-// // DAC Test Sweep Task - sweeps voltage from 0V to 3.3V on BOTH channels
-// static void dac_test_sweep_task(void* pvParameters) {
-//     uint8_t dac_value = 0;
-//     bool ascending = true;
-//     
-//     logi("DAC Test Sweep Started on BOTH channels\n");
-//     logi("========================================================\n");
-//     logi("DAC Value | GPIO25 (V) | GPIO26 (V) | Description\n");
-//     logi("========================================================\n");
-//     
-//     while (dac_test_mode) {
-//         // Output the SAME value to both DAC channels for testing
-//         dac_oneshot_output_voltage(dac_chan0_handle, dac_value);
-//         dac_oneshot_output_voltage(dac_chan1_handle, dac_value);
-//         
-//         // Calculate and display expected voltage
-//         float voltage = (dac_value / 255.0f) * 3.3f;
-//         
-//         // Log every 32 steps (8 data points in full sweep)
-//         if (dac_value % 32 == 0) {
-//             logi("   %3d    |   %.3f V  |   %.3f V  | %s\n", 
-//                  dac_value, 
-//                  voltage,
-//                  voltage,
-//                  dac_value == 0 ? "MIN" : (dac_value == 255 ? "MAX" : ""));
-//         }
-//         
-//         // Sweep up and down
-//         if (ascending) {
-//             if (dac_value == 255) {
-//                 ascending = false;
-//                 logi("========================================================\n");
-//                 logi("Reached MAX voltage (3.3V), sweeping down...\n");
-//                 vTaskDelay(pdMS_TO_TICKS(2000));  // Pause at max
-//             } else {
-//                 dac_value++;
-//             }
-//         } else {
-//             if (dac_value == 0) {
-//                 ascending = true;
-//                 logi("========================================================\n");
-//                 logi("Reached MIN voltage (0.0V), sweeping up...\n");
-//                 vTaskDelay(pdMS_TO_TICKS(2000));  // Pause at min
-//             } else {
-//                 dac_value--;
-//             }
-//         }
-//         
-//         vTaskDelay(pdMS_TO_TICKS(20));  // 20ms per step = ~10 seconds for full sweep
-//     }
-//     
-//     logi("DAC Test Mode Exited\n");
-//     logi("Switching to joystick control mode\n");
-//     dac_test_task_handle = NULL;
-//     vTaskDelete(NULL);
-// }
 
 // Set LED1 brightness (for LED blinking)
 static void led1_set_brightness(uint32_t brightness) {
