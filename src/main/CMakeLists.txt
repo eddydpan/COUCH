@@ -1,4 +1,4 @@
-set(srcs "app_main.c" "my_platform.c")
+set(srcs "app_main.c" "my_platform.c" "motor_controller.c")
 
 set(requires "bluepad32" "btstack" "driver")
 
