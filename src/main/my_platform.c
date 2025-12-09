@@ -163,20 +163,30 @@ static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t
             prev_button_x = current_button_x;
 
             // DAC Channel 0 (GPIO25): Controlled by left joystick Y-axis
-            int32_t left_joystick_y = gp->axis_y;  // Invert Y-axis (down = higher voltage)
+            // LEFT MOTOR: Special mapping with slow start zone
+            // -17 to -50: 0.8V to 1.2V (slow start zone)
+            // -51 to -512: 1.2V to 3.3V (linear acceleration zone)
+            int32_t left_joystick_y = gp->axis_y;
             uint8_t dac0_value;
             
-            // Only respond to NEGATIVE values (joystick pushed DOWN)
-            // Positive values and deadzone output 0V
             if (left_joystick_y < -16) {
-                // Map from -17 (just outside deadzone) to -512 (max down) -> 0V to 3.3V
-                int32_t adjusted_value = -left_joystick_y - 16;  // Convert to positive and remove deadzone
-                
-                // Clamp to max range
-                if (adjusted_value > 496) adjusted_value = 496;  // 512 - 16 = 496
-                
-                // Map linearly: 0 to 496 -> 0 to 255 (0V to 3.3V)
-                dac0_value = (uint8_t)((adjusted_value * LED_MAX_DUTY) / 496);
+                // Joystick pushed down beyond deadzone
+                if (left_joystick_y >= -50) {
+                    // Slow start zone: -17 to -50 maps to 0.8V to 1.2V
+                    int32_t adjusted_value = -left_joystick_y - 16;  // 1 to 34
+                    // DAC: 0.8V = 62, 1.1V = 88 (span of 31 values)
+                    const uint8_t DAC_MIN = 62;   // 0.8V
+                    const uint8_t DAC_MID = 88;   // 1.1V
+                    dac0_value = DAC_MIN + (uint8_t)((adjusted_value * (DAC_MID - DAC_MIN)) / 34);
+                } else {
+                    // Acceleration zone: -51 to -512 maps to 1.2V to 3.3V
+                    int32_t adjusted_value = -left_joystick_y - 50;  // 1 to 462
+                    if (adjusted_value > 462) adjusted_value = 462;
+                    // DAC: 1.1V = 88, 3.3V = 255 (span of 167 values)
+                    const uint8_t DAC_MID = 88;   // 1.1V
+                    const uint8_t DAC_MAX = 255;  // 3.3V
+                    dac0_value = DAC_MID + (uint8_t)((adjusted_value * (DAC_MAX - DAC_MID)) / 462);
+                }
             } else {
                 dac0_value = 0;  // 0V for positive values and deadzone
             }
